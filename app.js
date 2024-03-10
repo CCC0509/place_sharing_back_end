@@ -27,6 +27,7 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
+  console.log("somthing went wrong...");
   if (req.file) {
     fs.unlink(req.file.path, (err) => console.log(err));
   }

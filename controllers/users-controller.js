@@ -19,6 +19,7 @@ const getUsers = async (req, res, next) => {
 };
 
 const signup = async (req, res, next) => {
+  console.log("signup");
   const err = validationResult(req);
   if (!err.isEmpty()) {
     return next(new HttpError("InValid data...", 422));
@@ -76,6 +77,7 @@ const signup = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
+  console.log("login");
   const { email, password } = req.body;
 
   let findUser;
