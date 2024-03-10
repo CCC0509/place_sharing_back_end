@@ -12,7 +12,7 @@ const fileUpload = multer({
   limits: 500000,
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, "uploads/images");
+      cb(null, __dirname);
     },
     filename: (req, file, cb) => {
       const ext = MINE_TYPE_MAP[file.mimetype];
