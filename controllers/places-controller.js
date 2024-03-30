@@ -1,11 +1,24 @@
 const { validationResult } = require("express-validator");
-const fs = require("fs");
+const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
 const User = require("../models/user");
 const { default: mongoose } = require("mongoose");
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_API_KEY,
+    secretAccessKey: process.env.AWS_API_SECRET_KEY,
+  },
+  sslEnabled: false,
+  s3ForcePathStyle: true,
+  signatureVersion: "v4",
+});
+
+const bucketName = process.env.AWS_BUCKET;
 
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.placeId;
@@ -69,7 +82,7 @@ const createPlace = async (req, res, next) => {
     address,
     location,
     creator: req.userData.userId,
-    image: req.file.path,
+    image: req.file.location,
   });
 
   let user;
@@ -149,8 +162,6 @@ const deletePlaceById = async (req, res, next) => {
     );
   }
 
-  const placePath = place.image;
-
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
@@ -165,8 +176,23 @@ const deletePlaceById = async (req, res, next) => {
       new HttpError("Something went wrong, could not delete place.", 500)
     );
   }
+  const imageName = place.image.substring(place.image.lastIndexOf("/") + 1);
 
-  fs.unlink(placePath, (err) => console.log(err));
+  const params = {
+    Bucket: bucketName,
+    Key: imageName,
+  };
+  const command = new DeleteObjectCommand(params);
+
+  s3.send(command)
+    .then((data) => {
+      console.log("File deleted:", imageName);
+      return;
+    })
+    .catch((deleteErr) => {
+      console.error("Error deleting file:", deleteErr);
+      next(deleteErr);
+    });
 
   res.status(200).json({ message: "Deleted place." });
 };

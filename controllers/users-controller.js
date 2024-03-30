@@ -19,7 +19,6 @@ const getUsers = async (req, res, next) => {
 };
 
 const signup = async (req, res, next) => {
-  console.log("signup");
   const err = validationResult(req);
   if (!err.isEmpty()) {
     return next(new HttpError("InValid data...", 422));
@@ -51,7 +50,7 @@ const signup = async (req, res, next) => {
     name,
     email,
     password: hashedPassword,
-    image: req.file.path,
+    image: req.file.location,
     places: [],
   });
   try {
